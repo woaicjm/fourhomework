@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1,user-scalable=no">
+    <title>Class Breaks Renderer</title>
+    <script src="http://code.jquery.com/jquery-1.7.2.min.js"></script>
+    <link rel="stylesheet" href="https://js.arcgis.com/3.24/esri/css/esri.css">
+    <style>
+        html,
+        body,
+        #map {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+    <script src="https://js.arcgis.com/3.24/"></script>
+    <script>
+        var map;
+        require([
+            "esri/map", "esri/layers/FeatureLayer",
+            "esri/InfoTemplate", "esri/symbols/SimpleFillSymbol",
+            "esri/renderers/SimpleRenderer",
+            "esri/renderers/ClassBreaksRenderer",
+            "esri/symbols/SimpleLineSymbol", "esri/Color", "esri/layers/GraphicsLayer", "esri/graphic", "dojo/dom-style", "dojo/domReady!"
+        ], function(
+            Map, FeatureLayer,
+            InfoTemplate, SimpleFillSymbol,
+            SimpleRenderer, ClassBreaksRenderer,
+            SimpleLineSymbol, Color, GraphicsLayer, Graphic, domStyle
+        ) {
+            map = new Map("map", {
+                basemap: "osm",
+                center: [114.45, 37.75],
+                zoom: 4
+            });
+
+            var gLayer;
+
+            //加载数据
+
+
+
+
+
+            var renderer
+            var a = 1;
+
+
+            $(function() {
+                $("#render_change").click(function() {
+
+                    if (a == 1) {
+                        if (gLayer != null) {
+                            map.removeLayer(gLayer);
+                        }
+
+                        var symbol = new SimpleFillSymbol();
+                        renderer = null;
+                        renderer = new ClassBreaksRenderer(symbol, "POPU");
+
+                        renderer.addBreak(0, 2000, new SimpleFillSymbol().setColor(new Color([255,182,193, 0.5])));
+                        renderer.addBreak(2000, 3000, new SimpleFillSymbol().setColor(new Color([219,112,147, 0.5])));
+                        renderer.addBreak(3000, 4000, new SimpleFillSymbol().setColor(new Color([255,105,180, 0.5])));
+                        renderer.addBreak(4000, 7000, new SimpleFillSymbol().setColor(new Color([255,20,147, 0.5])));
+                        renderer.addBreak(7000, 9000, new SimpleFillSymbol().setColor(new Color([255,0,255, 0.5])));
+                        renderer.addBreak(9000, Infinity, new SimpleFillSymbol().setColor(new Color([139,0,139, 0.7])));
+
+                        a = 2;
+                    } else {
+                        map.removeLayer(gLayer);
+                        renderer = null;
+                        renderer = new SimpleRenderer(new SimpleFillSymbol().setOutline(new SimpleLineSymbol().setWidth(0.1).setColor(new Color([128, 128, 128]))));
+                        renderer.setColorInfo({
+                            //使用nico属性进行渲染  
+                            field: "POPU",
+                            minDataValue: 500,
+                            maxDataValue: 10000,
+                            colors: [
+                                new Color([255, 255, 255]),
+                                new Color([75, 40, 0])
+                            ]
+                        });
+                        a = 1;
+                    }
+
+                    gLayer = new GraphicsLayer();
+                    //加载数据
+                    $.get("https://popoyao.github.io/test_for_webgis_319/CHINA_json.json", null, function(result) {
+
+                        var features = result.features;
+                        for (var i = 0; i < features.length; i++) {
+                            var feature = features[i];
+                            var graphic = new Graphic(feature);
+                            gLayer.add(graphic);
+                        }
+                    });
+
+                    var infoTemplate = new InfoTemplate("${NAME}", "${*}");
+                    gLayer.setInfoTemplate(infoTemplate);
+                    gLayer.setRenderer(renderer);
+                    map.addLayer(gLayer);
+                });
+            });
+
+
+
+
+        });
+    </script>
+</head>
+
+<body>
+    <div> <button id="render_change">样式切换</button></div>
+    <div id="map"></div>
+
+</body>
+
+</html>

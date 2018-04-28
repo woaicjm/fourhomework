@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="initial-scale=1, maximum-scale=1,user-scalable=no"/>
+    <title>Earthquake Data Renderer</title>
+    <script src="https://js.arcgis.com/3.23/"></script>
+    <script type="text/javascript" src="https://code.jquery.com/jquery-1.8.2.min.js"></script>
+    <link rel="stylesheet" href="https://js.arcgis.com/3.23/esri/css/esri.css">
+    <style>
+      html, body, #map {
+        height: 100%;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        position: absolute;
+      }
+    </style>
+    <script>
+      var map, csv, csv2;
+      require([
+        "esri/map", 
+        "esri/layers/CSVLayer",
+        "esri/Color",
+        "esri/symbols/SimpleMarkerSymbol",
+        "esri/symbols/SimpleFillSymbol",
+         "esri/symbols/SimpleLineSymbol",
+        "esri/renderers/ClassBreaksRenderer",
+        "esri/renderers/HeatmapRenderer",
+//     "esri/renderers/ClassBreaksRenderer",,
+        "esri/InfoTemplate",
+        "esri/config",
+        "dojo/domReady!"
+      ], function(
+        Map,CSVLayer, Color,SimpleMarkerSymbol, SimpleFillSymbol, SimpleLineSymbol,ClassBreaksRenderer,HeatmapRenderer,InfoTemplate, esriConfig
+      ) {
+        //服务器配置获取csv地震数据
+        esriConfig.defaults.io.corsEnabledServers.push("hzj-777.github.io");
+        //加载地图
+        map = new Map("map", {
+          basemap: "osm",
+          center: [ 114, 31 ],
+          zoom: 3
+        });
+       addCSV(0);
+          //添加数据图层
+          function addCSV(style){
+        	csv = new CSVLayer("https://hzj-777.github.io/webgis/all_month2.csv",{id:"csv"} );
+            csv2 = new CSVLayer("https://hzj-777.github.io/webgis/all_month2.csv",{id:"csv"} );
+            //信息框
+            var template = new InfoTemplate("${type}", "${place}");
+            csv.setInfoTemplate(template);
+        	//定义标记符号
+	        var symbol = new SimpleMarkerSymbol();
+	        symbol.setColor(new Color([150, 150, 150, 0.5]));
+	        //定义唯一值渲染器，symbol是默认的渲染符号
+	        var renderer = new ClassBreaksRenderer(symbol, "depth");
+	        //定义热度图
+            var heatmapRenderer = new HeatmapRenderer(
+                {
+                    colors: ["rgba(0, 0, 255, 0)", "rgb(0, 0, 255)", "rgb(255, 0, 255)", "rgb(255, 0, 0)"],
+                    blurRadius: 10,
+                    maxPixelIntensity: 25,
+                    minPixelIntensity: 10
+                }
+            );
+              //ClassBreaksRenderer
+	        if(style==0)
+	        {
+		        renderer.addBreak(-200,-100,  new SimpleMarkerSymbol().setColor(new Color([221,160,221, 0.5])));
+		        renderer.addBreak(-100,-10,  new SimpleMarkerSymbol().setColor(new Color([221,160,221, 0.5])));
+		        renderer.addBreak(-10,20,  new SimpleMarkerSymbol().setColor(new Color([255,192,203, 0.5])));
+		        renderer.addBreak(20,50,  new SimpleMarkerSymbol().setColor(new Color([255,105,180, 0.5])));
+		        renderer.addBreak(50,80, new SimpleMarkerSymbol().setColor(new Color([199,21,133, 0.5])));
+		        renderer.addBreak(80,110,  new SimpleMarkerSymbol().setColor(new Color([139,0,139, 0.5])));
+		        renderer.addBreak(110,140,  new SimpleMarkerSymbol().setColor(new Color([138,43,226, 0.5])));
+		        renderer.addBreak(140, Infinity,  new SimpleMarkerSymbol().setColor(new Color([75,0,130, 0.5])));
+		        csv.setRenderer(renderer);
+                map.addLayer(csv);
+	        }
+	        //heatmapRendere
+	        else
+            {
+                csv2.setRenderer(heatmapRenderer);
+                var orangeRed = new Color([	125,0,0, 0.7]);
+                symbol = new SimpleMarkerSymbol(new SimpleMarkerSymbol("solid", 8, null, orangeRed));
+                symbol2 = new SimpleMarkerSymbol(new SimpleMarkerSymbol("solid", 18, null, orangeRed));
+                symbol3 = new SimpleMarkerSymbol(new SimpleMarkerSymbol("solid", 28, null, orangeRed));
+                symbol4 = new SimpleMarkerSymbol(new SimpleMarkerSymbol("solid", 38, null, orangeRed));
+                symbol5 = new SimpleMarkerSymbol(new SimpleMarkerSymbol("solid", 48, null, orangeRed));
+                csv2.setRenderer(heatmapRenderer);
+                map.addLayer(csv2);
+            }
+        }
+          //checkbox切换
+          $(function(){
+					  $(":radio").click(function(){
+								map.removeLayer(csv);
+					  	 if($(this).val()==0)
+					  	 {
+					  	 	  addCSV(0);
+					  	 }
+					  	 else
+					  	 {
+					  	 	addCSV(1);
+                            
+					  	 }
+                         
+					  });
+				 });
+      });
+      
+    </script>
+  </head>
+
+  <body>
+    <div id="map" style="height: 110%"></div>
+    <!--checkbox样式-->
+    <div style="position: absolute;bottom:0.1px;left:85.7%;background: white;">
+    	渲染方式：<br />
+			<label><input name="Fruit" type="radio" value="0" checked = "checked"/>颜色分类 </label>
+			<label><input name="Fruit" type="radio" value="1" />热度图</label>
+    </div>
+    
+  </body>
+</html>
